@@ -1,0 +1,152 @@
+--- a/project/nf_sume_fmc_gtwizard_example/nf_sume_fmc_gtwizard_example.srcs/constrs_1/imports/example_design/nf_sume_fmc_gtwizard_exdes.xdc	2015-03-26 23:07:12.343145756 -0700
++++ b/project/nf_sume_fmc_gtwizard_example/nf_sume_fmc_gtwizard_example.srcs/constrs_1/imports/example_design/nf_sume_fmc_gtwizard_exdes.xdc	2015-03-26 23:08:58.735137300 -0700
+@@ -79,7 +79,7 @@
+ 
+ #create_clock -name drpclk_in_i -period 10.0 [get_pins -hier -filter {name=~*nf_sume_fmc_gtwizard_support_i*gt_usrclk_source*DRP_CLK_BUFG*I}]
+ 
+-create_clock -name drpclk_in_i -period 10.0 [get_ports SYSCLK_IN_P]
++create_clock -name drpclk_in_i -period 10.0 [get_nets drpclk_in_i]
+ 
+ #set_false_path -from drpclk_in_i -to [get_clocks -include_generated_clocks -of_objects [get_pins -hier -filter {name=~*gt0_nf_sume_fmc_gtwizard_i*gthe2_i*TXOUTCLK}]]
+ #set_false_path -from [get_clocks -include_generated_clocks -of_objects [get_pins -hier -filter {name=~*gt0_nf_sume_fmc_gtwizard_i*gthe2_i*TXOUTCLK}]] -to drpclk_in_i
+@@ -166,8 +166,8 @@
+ 
+ ## LOC constrain for DRP_CLK_P/N 
+  
+-set_property LOC H19 [get_ports  SYSCLK_IN_P]
+-set_property LOC G18 [get_ports  SYSCLK_IN_N]
++#set_property LOC H19 [get_ports  SYSCLK_IN_P]
++#set_property LOC G18 [get_ports  SYSCLK_IN_N]
+  
+ ################################# mgt wrapper constraints #####################
+ 
+--- a/project/nf_sume_fmc_gtwizard_example/nf_sume_fmc_gtwizard_example.srcs/sources_1/imports/example_design/nf_sume_fmc_gtwizard_exdes.v	2015-03-26 23:07:12.349145756 -0700
++++ b/project/nf_sume_fmc_gtwizard_example/nf_sume_fmc_gtwizard_example.srcs/sources_1/imports/example_design/nf_sume_fmc_gtwizard_exdes.v	2015-03-27 12:47:56.015231637 -0700
+@@ -82,10 +82,12 @@
+     input wire  Q2_CLK0_GTREFCLK_PAD_P_IN,
+     input wire  SYSCLK_IN_P,
+     input wire  SYSCLK_IN_N,
+-    input wire  GTTX_RESET_IN,
+-    input wire  GTRX_RESET_IN,
+-    input wire  CPLL_RESET_IN,
+-    input wire  QPLL_RESET_IN,
++ 	input  wire sys_rst,
++ 	inout  wire	iic_fpga_scl_io,
++ 	inout  wire	iic_fpga_sda_io,
++ 	output wire [1:0]	iic_reset,
++ 	input  wire	uart_rxd,
++ 	output wire	uart_txd,
+     output wire TRACK_DATA_OUT,
+     input  wire [9:0]   RXN_IN,
+     input  wire [9:0]   RXP_IN,
+@@ -93,6 +95,9 @@
+     output wire [9:0]   TXP_OUT
+ );
+ 
++	wire sysclk_i;
++	wire mb_soft_reset;
++
+     wire soft_reset_i;
+     wire soft_reset_vio_i;
+ 
+@@ -775,7 +780,7 @@
+ 
+     //----------------------------- Global Signals -----------------------------
+ 
+-    wire            drpclk_in_i;
++    reg             drpclk_in_i;
+     wire            gt0_tx_system_reset_c;
+     wire            gt0_rx_system_reset_c;
+     wire            gt1_tx_system_reset_c;
+@@ -1451,7 +1456,7 @@
+     )
+     nf_sume_fmc_gtwizard_support_i
+     (
+-        .soft_reset_in                  (soft_reset_i),
++        .soft_reset_in                  (soft_reset_i | mb_soft_reset),
+         .dont_reset_on_data_error_in    (tied_to_ground_i),
+     .q2_clk0_gtrefclk_pad_n_in  (Q2_CLK0_GTREFCLK_PAD_N_IN),
+     .q2_clk0_gtrefclk_pad_p_in  (Q2_CLK0_GTREFCLK_PAD_P_IN),
+@@ -2051,9 +2056,7 @@
+     .gt2_qplloutclk_out(),
+     .gt2_qplloutrefclk_out(),
+ 
+-    .DRP_CLK_O (drpclk_in_i),
+-        .sysclk_in_p                    (SYSCLK_IN_P),
+-        .sysclk_in_n                    (SYSCLK_IN_N)
++    .DRPCLK_IN (drpclk_in_i)
+     );
+ 
+ 
+@@ -4330,5 +4333,41 @@
+   .probe6(gt9_rxresetdone_ila) 
+ );
+ 
++IBUFGDS # (
++    .DIFF_TERM      ("TRUE"),
++    .IBUF_LOW_PWR   ("FALSE")
++) u_ibufg_clk_ref (
++    .I              (SYSCLK_IN_P),
++    .IB             (SYSCLK_IN_N),
++    .O              (sysclk_i)
++);
++
++always @(posedge sysclk_i)
++begin
++    drpclk_in_i <= ~drpclk_in_i;
++end
++
++system_wrapper system_i (
++    .gpio_out_0             (mb_soft_reset),
++    .gpio_in_0              (track_data_out_i),
++    .gpio_in_1              (gt0_error_count_i),
++    .gpio_in_2              (gt1_error_count_i),
++    .gpio_in_3              (gt2_error_count_i),
++    .gpio_in_4              (gt3_error_count_i),
++    .gpio_in_5              (gt4_error_count_i),
++    .gpio_in_6              (gt5_error_count_i),
++    .gpio_in_7              (gt6_error_count_i),
++    .gpio_in_8              (gt7_error_count_i),
++    .gpio_in_9              (gt8_error_count_i),
++    .gpio_in_10             (gt9_error_count_i),
++    .iic_fpga_scl_io        (iic_fpga_scl_io),
++    .iic_fpga_sda_io        (iic_fpga_sda_io),
++    .iic_reset              (iic_reset),
++    .reset                  (sys_rst),
++    .sysclk                 (sysclk_i),
++    .uart_rxd               (uart_rxd),
++    .uart_txd               (uart_txd)
++);       
++
+ endmodule
+     
+--- a/project/nf_sume_fmc_gtwizard_example/nf_sume_fmc_gtwizard_example.srcs/sources_1/imports/example_design/support/nf_sume_fmc_gtwizard_support.v	2015-03-26 23:07:12.349145756 -0700
++++ b/project/nf_sume_fmc_gtwizard_example/nf_sume_fmc_gtwizard_example.srcs/sources_1/imports/example_design/support/nf_sume_fmc_gtwizard_support.v	2015-03-27 13:03:04.840159400 -0700
+@@ -642,9 +642,7 @@
+     output      gt2_qpllrefclklost_out,
+     output      gt2_qplloutclk_out,
+     output      gt2_qplloutrefclk_out,
+-    output          DRP_CLK_O,
+-input           sysclk_in_p,
+-input           sysclk_in_n
++    input       DRPCLK_IN
+ 
+ );
+ 
+@@ -1475,13 +1473,10 @@
+     .GT9_TXUSRCLK2_OUT   (gt9_txusrclk2_i),
+     .GT9_TXOUTCLK_IN     (gt9_txoutclk_i),
+     .GT9_RXUSRCLK_OUT    (gt9_rxusrclk_i),
+-    .GT9_RXUSRCLK2_OUT   (gt9_rxusrclk2_i),
+- 
+-    .DRPCLK_IN_P (sysclk_in_p),
+-    .DRPCLK_IN_N (sysclk_in_n),
+-    .DRPCLK_OUT(sysclk_in_i)
++    .GT9_RXUSRCLK2_OUT   (gt9_rxusrclk2_i)
+ );
+-assign DRP_CLK_O = sysclk_in_i;
++assign sysclk_in_i = DRPCLK_IN;
++
+     nf_sume_fmc_gtwizard_common #
+   (
+    .WRAPPER_SIM_GTRESET_SPEEDUP(EXAMPLE_SIM_GTRESET_SPEEDUP)

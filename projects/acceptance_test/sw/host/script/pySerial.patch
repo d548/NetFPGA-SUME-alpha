@@ -1,0 +1,10 @@
+--- a/usr/lib/python2.7/site-packages/serial/tools/list_ports_posix.py	2015-03-24 12:51:35.356086257 -0700
++++ b/usr/lib/python2.7/site-packages/serial/tools/list_ports_posix.py	2015-03-24 12:52:20.016082707 -0700
+@@ -65,6 +65,7 @@
+ 
+     def usb_lsusb_string(sysfs_path):
+         bus, dev = os.path.basename(os.path.realpath(sysfs_path)).split('-')
++        dev = popen(['cat', sysfs_path + '/devnum'])
+         try:
+             desc = popen(['lsusb', '-v', '-s', '%s:%s' % (bus, dev)])
+             # descriptions from device

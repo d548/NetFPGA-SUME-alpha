@@ -1,0 +1,4 @@
+The NetFPGA-SUME reference manual is currently available as a wiki page in the following link:
+https://reference.digilentinc.com/sume:refmanual
+
+A pdf file of the reference manual will be added here as soon as the document is finalized.

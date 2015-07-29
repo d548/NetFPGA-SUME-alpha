@@ -1,0 +1,11 @@
+diff -Nur -x '.*' -x '*.xml' -x '*.a' -x '*.log' SDK_Workspace/bsp/mbsys_microblaze_0/libsrc/common_v1_00_a/src/xbasic_types.c SDK_Workspace_b/bsp/mbsys_microblaze_0/libsrc/common_v1_00_a/src/xbasic_types.c
+--- SDK_Workspace/bsp/mbsys_microblaze_0/libsrc/common_v1_00_a/src/xbasic_types.c	2014-07-15 15:26:23.832832481 -0700
++++ SDK_Workspace_b/bsp/mbsys_microblaze_0/libsrc/common_v1_00_a/src/xbasic_types.c	2014-07-15 15:21:09.776833141 -0700
+@@ -131,7 +131,3 @@
+ * @note     None.
+ *
+ ******************************************************************************/
+-void XNullHandler(void *NullParameter)
+-{
+- (void) NullParameter;
+-}

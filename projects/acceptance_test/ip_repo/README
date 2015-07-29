@@ -1,0 +1,19 @@
+The following files have been commited from Digilent Inc. as part of the Acceptance Test for NetFPGA SUME board:
+
+- projects/acceptance_test/ip_repo/digilent/cores/d_clkfreq_detector/source/d_clkfreq_detector.v
+- projects/acceptance_test/ip_repo/digilent/cores/d_clkfreq_detector/source/d_clkfreq_detector_S_AXI.v
+- projects/acceptance_test/ip_repo/digilent/cores/d_sdctrl/source/cmd_rxtx.vhd
+- projects/acceptance_test/ip_repo/digilent/cores/nf_sume_gpio_test/source/nf_sume_gpio_test.v
+- projects/acceptance_test/ip_repo/digilent/cores/nf_sume_gpio_test/source/nf_sume_gpio_test_S_AXI.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/axi_read_controller.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/axi_write_controller.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/maxi_controller.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/maxis_controller.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/pcie_2_axilite.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/s_axi_config.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/saxis_controller.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/rtl/tag_manager.v
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/xgui/pcie_2_axilite_v1_0.tcl
+- projects/acceptance_test/ip_repo/xilinx/cores/pcie2axilite_bridge/component.xml
+- projects/acceptance_test/ip_repo/std/cores/nf_axis_gen_chk/source/nf_axis_gen_chk.v
+- projects/acceptance_test/ip_repo/std/cores/nf_sume_10g_interface_shared_logic/hdl/nf_sume_10g_interface_shared_logic.v

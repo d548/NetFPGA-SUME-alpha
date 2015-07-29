@@ -1,0 +1,5 @@
+The NetFPGA-SUME general constraints xdc file is currently available in the following link:
+https://reference.digilentinc.com/_media/sume:sume_master.zip
+Access is also available through Digilent's wiki page: https://reference.digilentinc.com/doku.php?id=sume:sume
+
+

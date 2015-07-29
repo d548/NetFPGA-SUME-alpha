@@ -1,0 +1,30 @@
+--- a/project/nf_sume_qth_ibert_example/nf_sume_qth_ibert_example.srcs/sources_1/imports/example_design/example_nf_sume_qth_ibert.v	2015-02-26 10:37:26.000000000 -0800
++++ b/project/nf_sume_qth_ibert_example/nf_sume_qth_ibert_example.srcs/sources_1/imports/example_design/example_nf_sume_qth_ibert.v	2014-12-10 08:59:52.365422909 -0800
+@@ -27,6 +27,12 @@
+   input  [(4*`C_NUM_QUADS)-1:0]   	RXP_I,
+   input                           	SYSCLKP_I,
+   input                           	SYSCLKN_I,
++  input                             RESET,
++  inout                             iic_fpga_scl_io,
++  inout                             iic_fpga_sda_io,
++  output [1:0]                      iic_reset,
++  input                             uart_rxd,
++  output                            uart_txd,
+   input  [`C_REFCLKS_USED-1:0]        	GTREFCLK0P_I,
+   input  [`C_REFCLKS_USED-1:0]        	GTREFCLK0N_I,
+   input  [`C_REFCLKS_USED-1:0]        	GTREFCLK1P_I,
+@@ -101,4 +107,14 @@
+       .GTREFCLK1_I(gtrefclk1_i)
+     );
+ 
++system_wrapper system_inst (
++    .iic_fpga_scl_io(iic_fpga_scl_io),
++    .iic_fpga_sda_io(iic_fpga_sda_io),
++    .iic_reset(iic_reset),
++    .reset(RESET),
++    .sysclk(sysclk_i),
++    .uart_rxd(uart_rxd),
++    .uart_txd(uart_txd)
++);
++
+ endmodule

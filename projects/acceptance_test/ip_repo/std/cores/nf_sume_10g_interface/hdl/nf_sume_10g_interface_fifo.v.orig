@@ -1,0 +1,169 @@
+/****************************************************************************
+*
+* Copyright (c) 2015 Digilent Inc.
+* All rights reserved.
+*
+* File:
+* nf_sume_10g_interface_fifo.v
+*
+* Library:
+* hw/std/nf_sume_10g_interface
+*
+* Author:
+* Tinghui Wang (Steve)
+*
+* Description:
+* True dual-port FIFO with AXI-Stream Interface with data width of 
+* 64-bits. Intended to use as TX/RX buffer interfacing NetFPGA-SUME
+* 10G Ethernet MAC.
+*
+* This software was developed by the University of Cambridge Computer Laboratory
+* under EPSRC INTERNET Project EP/H040536/1, National Science Foundation under Grant No. CNS-0855268,
+* and Defense Advanced Research Projects Agency (DARPA) and Air Force Research Laboratory (AFRL),
+* under contract FA8750-11-C-0249.
+*
+* @NETFPGA_LICENSE_HEADER_START@
+*
+* Licensed to NetFPGA Open Systems C.I.C. (NetFPGA) under one or more contributor
+* license agreements. See the NOTICE file distributed with this work for
+* additional information regarding copyright ownership. NetFPGA licenses this
+* file to you under the NetFPGA Hardware-Software License, Version 1.0 (the
+* "License"); you may not use this file except in compliance with the
+* License. You may obtain a copy of the License at:
+*
+* http://www.netfpga-cic.org
+*
+* Unless required by applicable law or agreed to in writing, Work distributed
+* under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+* CONDITIONS OF ANY KIND, either express or implied. See the License for the
+* specific language governing permissions and limitations under the License.
+*
+* @NETFPGA_LICENSE_HEADER_END@
+*/ 
+
+`timescale 1ps / 1ps
+
+module nf_sume_10g_interface_fifo (
+	// FIFO Reset Signal
+	input			reset,
+
+	// FIFO write Interface
+	input			wr_axis_aresetn,
+	input			wr_axis_aclk,
+	input	[63:0]	wr_axis_tdata,
+	input	[7:0]	wr_axis_tkeep,
+	input			wr_axis_tvalid,
+	input			wr_axis_tlast,
+	input			wr_axis_tready,
+	input			wr_axis_tuser,
+
+	// FIFO read interface
+	input			rd_axis_aresetn,
+	input			rd_axis_aclk,
+	output	[63:0]	rd_axis_tdata,
+	output	[7:0]	rd_axis_tkeep,
+	output			rd_axis_tvalid,
+	output			rd_axis_tlast,
+	output			rd_axis_tready,
+	output			rd_axis_tuser,
+
+	// fifo status signal
+	output			fifo_full,
+	output			fifo_empty,
+	output			fifo_almost_full
+);
+
+wire [7:0] fifo_do_extend;
+wire [7:0] fifo_di_extend;
+wire [63:0] fifo_do;
+wire [63:0] fifo_di;
+
+/* Instantiate Clock domain crossing FIFO:
+ *
+ * FIFO_DUALCLOCK_MACRO: Dual Clock, First-In, First Out (FIFO) RAM Buffer
+ * --------------------------------------------------------------------------
+ * Device: 7-series
+ * Data_width: 72-bits
+ * FIFO_Size: 36Kb
+ * FIFO_Depth: 512 (9-bits)
+ */
+FIFO_DUALCLOCK_MACRO # (
+	.ALMOST_EMPTY_OFFSET(9'hA),			// Almost Empty Threshold
+	.ALMOST_FULL_OFFSET(9'hA),			// Almost Full Threshold
+	.DATA_WIDTH(72),					// Data Width: 72-bits
+	.DEVICE("7SERIES"),					// Target Device: 7series
+	.FIFO_SIZE("36Kb"),					// Target BRAM: 36Kb
+	.FIRST_WORD_FALL_THROUGH("TRUE")	//Sets FIFO FWFT to True
+) fifo_inst (
+	.ALMOSTEMPTY		(),
+	.ALMOSTFULL			(fifo_almost_full),
+	.DO					({fifo_do, fifo_do_extend}),
+	.EMPTY				(fifo_empty),
+	.FULL				(fifo_full),
+	.RDCOUNT			(),
+	.RDERR				(),
+	.WRCOUNT			(),
+	.WRERR				(),
+	.DI					({fifo_di, fifo_di_extend}),
+	.RDCLK				(rd_axis_aclk),
+	.RDEN				(rd_fifo_en),
+	.RST				(reset),
+	.WRCLK				(wr_axis_clk),
+	.WREN				(wr_fifo_en)
+);
+
+assign rd_axis_tdata = fifo_do;
+assign fifo_di = wr_axis_tdata;
+
+// Encode tkeep
+reg	[3:0]	wr_tkeep_encoded;
+reg [3:0] 	rd_tkeep_encoded;
+
+always @(wr_tkeep)
+begin
+	case(wr_tkeep)
+		8'h1:	wr_tkeep_encoded = 4'h0;
+		8'h3:	wr_tkeep_encoded = 4'h1;
+		8'h7:	wr_tkeep_encoded = 4'h2;
+		8'hF:	wr_tkeep_encoded = 4'h3;
+		8'h1F:	wr_tkeep_encoded = 4'h4;
+		8'h3F:	wr_tkeep_encoded = 4'h5;
+		8'h7F:	wr_tkeep_encoded = 4'h6;
+		8'hFF:	wr_tkeep_encoded = 4'h7;
+		default:
+				wr_tkeep_encoded = 4'h8;
+	endcase
+end
+
+always @(rd_tkeep_encoded)
+begin
+	case(rd_tkeep_encoded)
+		4'h0:	rd_tkeep = 8'h1;
+		4'h1:	rd_tkeep = 8'h3;
+		4'h2:	rd_tkeep = 8'h7;
+		4'h3:	rd_tkeep = 8'hF;
+		4'h4:	rd_tkeep = 8'h1F;
+		4'h5:	rd_tkeep = 8'h3F;
+		4'h6:	rd_tkeep = 8'h7F;
+		4'h7:	rd_tkeep = 8'hFF;
+		default:
+				rd_tkeep = 8'h0;
+	endcase
+end
+
+// Fifo Data Structure
+assign fifo_di_extend = {wr_tkeep_encoded, 2'h0, wr_axis_tlast, wr_axis_tuser};
+assign rd_tkeep_encoded = fifo_do_extend[7:4];
+assign rd_axis_tlast = fifo_do_extend[1];
+assign rd_axis_tuser = fifo_do_extend[0];
+
+// Write Interface Signals
+assign wr_fifo_en = ~fifo_full & wr_axis_tvalid;
+assign wr_axis_tready = ~fifo_full;
+
+// Read Interface Signals
+assign rd_fifo_en = ~fifo_empty & rd_axis_tready;
+assign rd_axis_tvalid = ~fifo_empty & rd_axis_tready;
+
+endmodule
+
