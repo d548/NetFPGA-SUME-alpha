@@ -378,8 +378,10 @@ def nftest_regread_expect(addr, val):
 # Arguments: address to read
 ############################
 def nftest_regread(addr):
+    if sim:
         simReg.regreadstim(addr)
         return 0
+    return hwRegLib.regread(addr)
 
 ############################
 # Function: regread_result
