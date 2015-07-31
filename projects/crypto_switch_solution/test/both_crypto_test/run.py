@@ -40,7 +40,7 @@ from scapy.layers.all import Ether, IP, TCP
 from reg_defines_crypto_switch import *
 from crypto_lib import *
 
-conn = ('../connections/crossover', [])
+conn = ('../connections/conn', [])
 nftest_init(sim_loop = ['nf0', 'nf1', 'nf2', 'nf3'], hw_config = [conn])
 nftest_start()
 
@@ -61,9 +61,18 @@ for i in range(4):
 num_broadcast = 10
 
 
+# Reset the switch table lookup counters (value is reset every time is read)
+if isHW():
+    nftest_regread(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT())
+    nftest_regread(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS())
+
+
 # define the key we want to use to encrypt the packet
 key = 0x0
 
+# Now write the key in the register (in case an older key is left inside)
+if isHW():
+    nftest_regwrite(SUME_CRYPTO_0_KEY(), key)
 
 pkts = []
 encrypt_pkts=[]
@@ -78,20 +87,20 @@ for i in range(num_broadcast):
     encrypt_pkts.append(encrypt_pkt(key, pkt))
 
     for i in range(num_broadcast):
-	    for pkt in pkts:
-	        pkt.time = i*(1e-8)
-	    for pkt in encrypt_pkts:
-	        pkt.time = i*(1e-8)
+        for pkt in pkts:
+            pkt.time = i*(1e-8)
+        for pkt in encrypt_pkts:
+            pkt.time = i*(1e-8)
 
-if isHW():
-        nftest_send_phy('nf0', pkt)
+    if isHW():
         nftest_expect_phy('nf1', encrypt_pkt(key, pkt))
+        nftest_send_phy('nf0', pkt)
     
 if not isHW():
-    nftest_send_phy('nf0', pkts)
     nftest_expect_phy('nf1', encrypt_pkts)
     nftest_expect_phy('nf2', encrypt_pkts)
     nftest_expect_phy('nf3', encrypt_pkts)
+    nftest_send_phy('nf0', pkts)
 
 nftest_barrier()
 
@@ -106,31 +115,31 @@ for i in range(num_normal):
     encrypt_pkta.append(encrypt_pkt(key, pkt))
 
     for i in range(num_normal):
-	    for pkt in pkta:
-	        pkt.time = i*(1e-8)
-	    for pkt in encrypt_pkta:
-	        pkt.time = i*(1e-8)
+        for pkt in pkta:
+            pkt.time = i*(1e-8)
+        for pkt in encrypt_pkta:
+            pkt.time = i*(1e-8)
 
-if isHW():
-    	nftest_send_phy('nf1', pkt)
-    	nftest_expect_phy('nf0', encrypt_pkt(key, pkt))
+    if isHW():
+        nftest_expect_phy('nf0', encrypt_pkt(key, pkt))
+        nftest_send_phy('nf1', pkt)
 
 if not isHW():
-    nftest_send_phy('nf1', pkta)
     nftest_expect_phy('nf0', encrypt_pkta)
+    nftest_send_phy('nf1', pkta)
 
 nftest_barrier()
 
 if isHW():
     # Now we expect to see the lut_hit and lut_miss registers incremented and we
     # verify this by doing a  reg
-    rres3= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa)
-    rres4= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa)
+    rres1= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), num_broadcast)
+    rres2= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), num_normal)
     # List containing the return values of the reg_reads
-    mres=[rres1,rres2,rres3,rres4]
+    mres = [rres1, rres2]
 else:
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa) # lut_hit
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa) # lut_miss
-    mres=[]
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), num_broadcast) # lut_miss
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), num_normal) # lut_hit
+    mres = []
 
 nftest_finish(mres)

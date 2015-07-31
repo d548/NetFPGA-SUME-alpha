@@ -82,7 +82,7 @@ if isHW():
 else:
     nftest_regread_expect(SUME_CRYPTO_0_KEY(), key) #encryption key
 
-nftest_barrier()
+#nftest_barrier()
 
 pkts = []
 encrypt_pkts=[]
@@ -97,15 +97,15 @@ for i in range(num_broadcast):
     encrypt_pkts.append(encrypt_pkt(key, pkt))
 
     for i in range(num_broadcast):
-	    for pkt in pkts:
-	        pkt.time = i*(1e-8) + (1e-6)
+        for pkt in pkts:
+            pkt.time = i*(1e-8) + (1e-6)
 
-	    for pkt in encrypt_pkts:
-	        pkt.time = i*(1e-8) + (1e-6)
+        for pkt in encrypt_pkts:
+            pkt.time = i*(1e-8) + (1e-6)
 
-if isHW():
-        nftest_send_phy('nf0', pkt)
+    if isHW():
         nftest_expect_phy('nf1', encrypt_pkt(key, pkt))
+        nftest_send_phy('nf0', pkt)
     
 if not isHW():
     nftest_send_phy('nf0', pkts)
@@ -122,7 +122,7 @@ if isHW():
 else:
     nftest_regread_expect(SUME_CRYPTO_0_KEY(), key1) #encryption key
 
-nftest_barrier()
+#nftest_barrier()
 
 num_normal = 10
 
@@ -135,15 +135,15 @@ for i in range(num_normal):
     encrypt_pkta.append(encrypt_pkt(key1, pkt))
 
     for i in range(num_normal):
-	    for pkt in pkta:
-	        pkt.time = (i+5)*(1e-8) + (1e-6)
+        for pkt in pkta:
+            pkt.time = (i+5)*(1e-8) + (1e-6)
 
-	    for pkt in encrypt_pkta:
-	        pkt.time = (i+5)*(1e-8) + (1e-6)
+    for pkt in encrypt_pkta:
+        pkt.time = (i+5)*(1e-8) + (1e-6)
 
-if isHW():
-    	nftest_send_phy('nf1', pkt)
-    	nftest_expect_phy('nf0', encrypt_pkt(key1, pkt))
+    if isHW():
+        nftest_send_phy('nf1', pkt)
+        nftest_expect_phy('nf0', encrypt_pkt(key1, pkt))
 
 if not isHW():
     nftest_send_phy('nf1', pkta)
@@ -154,14 +154,14 @@ nftest_barrier()
 if isHW():
     # Now we expect to see the lut_hit and lut_miss registers incremented and we
     # verify this by doing a  reg
-    rres3= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa)
-    rres4= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa)
+    rres3= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), num_broadcast)
+    rres4= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), num_normal)
     # List containing the return values of the reg_reads
-    mres=[rres1,rres2,rres3,rres4]
+    mres=[rres1, rres2, rres3, rres4]
 else:
  #   nftest_regread_expect(SUME_CRYPTO_KEY_0(), key1) #encryption key
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa) # lut_hit
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa) # lut_miss
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), num_broadcast) # lut_miss
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), num_normal) # lut_hit
     mres=[]
 
 nftest_finish(mres)

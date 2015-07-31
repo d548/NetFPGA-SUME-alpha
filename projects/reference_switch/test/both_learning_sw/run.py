@@ -53,6 +53,10 @@ if isHW():
    nftest_regwrite(SUME_NF_10G_INTERFACE_3_RESET(), 0x1)
    nftest_regwrite(SUME_NF_RIFFA_DMA_0_RESET(), 0x1)
 
+   # Reset the switch table lookup counters (value is reset every time is read)
+   nftest_regread(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT())
+   nftest_regread(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS())
+
 nftest_start()
 
 
@@ -104,13 +108,13 @@ nftest_barrier()
 if isHW():
     # Now we expect to see the lut_hit and lut_miss registers incremented and we
     # verify this by doing a regread_expect
-    rres1= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa)
-    rres2= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa)
+    rres1= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), num_normal)
+    rres2= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), num_broadcast)
     # List containing the return values of the reg_reads
     mres=[rres1,rres2]
 else:
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa) # lut_hit
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa) # lut_miss
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), num_normal) # lut_hit
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), num_broadcast) # lut_miss
     mres=[]
 
 nftest_finish(mres)

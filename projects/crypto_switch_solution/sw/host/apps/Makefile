@@ -34,7 +34,7 @@ all:	rwaxi
 
 rwaxi:
 	cc -Wall -Werror -o rwaxi rwaxi.c \
-		-I../driver
+		-I$(DRIVER_FOLDER)
 
 clean:
 	rm -f rwaxi
