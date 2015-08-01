@@ -1,6 +1,6 @@
 export SUME_FOLDER=${HOME}/NetFPGA-SUME-alpha
 export XILINX_PATH=/opt/Xilinx/Vivado/2014.4
-export NF_PROJECT_NAME=reference_switch
+export NF_PROJECT_NAME=crypto_switch
 export PROJECTS=${SUME_FOLDER}/projects
 export DEV_PROJECTS=${SUME_FOLDER}/dev-projects
 export IP_FOLDER=${SUME_FOLDER}/lib/hw/std/cores
