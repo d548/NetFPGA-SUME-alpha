@@ -62,7 +62,7 @@ num_broadcast = 10
 
 
 # define the key we want to use to encrypt the packet
-key = 0x0
+key = 0xFFFFFFFF
 
 
 pkts = []
@@ -124,13 +124,13 @@ nftest_barrier()
 if isHW():
     # Now we expect to see the lut_hit and lut_miss registers incremented and we
     # verify this by doing a  reg
-    rres3= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_LUTHIT_0(), 0xa)
-    rres4= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_LUTMISS_0(), 0xa)
+    rres3= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa)
+    rres4= nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa)
     # List containing the return values of the reg_reads
     mres=[rres1,rres2,rres3,rres4]
 else:
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_LUTHIT_0(), 0xa) # lut_hit
-    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_LUTMISS_0(), 0xa) # lut_miss
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTHIT(), 0xa) # lut_hit
+    nftest_regread_expect(SUME_OUTPUT_PORT_LOOKUP_0_LUTMISS(), 0xa) # lut_miss
     mres=[]
 
 nftest_finish(mres)
